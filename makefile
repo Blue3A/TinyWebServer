@@ -1,5 +1,11 @@
-server:main.c ./threadpool/threadpool.h ./http/http_conn.cpp ./http/http_conn.h ./lock/locker.h ./log/log.cpp ./log/log.h ./log/block_queue.h
+server: main.c ./threadpool/threadpool.h ./http/http_conn.cpp ./http/http_conn.h ./lock/locker.h ./log/log.cpp ./log/log.h ./log/block_queue.h
 	g++ -o server -g main.c ./threadpool/threadpool.h ./http/http_conn.cpp ./http/http_conn.h ./lock/locker.h ./log/log.cpp ./log/log.h -lpthread 
-#	g++ -o server -g main.c threadpool.h http_conn.cpp http_conn.h locker.h log.cpp log.h block_queue.h -lpthread 
+
+test_pre: ./test_presure/test_presure.c
+	gcc -o test_pre ./test_presure/test_presure.c
+
+check.cgi:./CGI&mysql/sign.cpp ./CGI&mysql/sql_connection_pool.cpp ./CGI&mysql/sql_connection_pool.h
+	g++ -o check.cgi ./CGI&mysql/sign.cpp ./CGI&mysql/sql_connection_pool.cpp ./CGI&mysql/sql_connection_pool.h -lmysqlclient
+
 clean:
 	rm  -r server

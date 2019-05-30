@@ -2,9 +2,9 @@
 
 TinyWebServer
 ===============
-Linux下的简易web服务器，实现web端用户注册，登录功能.
+Linux下的简易web服务器，实现web端用户注册，登录功能,经压力测试可以实现上万的并发连接数据交换.
 > * C/C++
-> * B/S架构
+> * B/S模型
 > * [线程同步机制包装类](https://github.com/qinguoyi/TinyWebServer/tree/master/lock)
 > * [http连接请求处理类](https://github.com/qinguoyi/TinyWebServer/tree/master/http)
 > * [半同步/半反应堆线程池](https://github.com/qinguoyi/TinyWebServer/tree/master/threadpool)
@@ -12,6 +12,7 @@ Linux下的简易web服务器，实现web端用户注册，登录功能.
 > * [同步/异步日志系统 ](https://github.com/qinguoyi/TinyWebServer/tree/master/log)  
 > * [数据库连接池](https://github.com/qinguoyi/TinyWebServer/tree/master/CGI%26mysql) 
 > * [CGI实现注册和登录校验](https://github.com/qinguoyi/TinyWebServer/tree/master/CGI%26mysql) 
+> * [简易服务器压力测试](https://github.com/qinguoyi/TinyWebServer/tree/master/test_presure)
 
 
 web端界面
@@ -29,7 +30,7 @@ web端界面
 <div align=center><img src="https://github.com/qinguoyi/TinyWebServer/blob/master/interface/signin.jpg" height="200"/><img src="https://github.com/qinguoyi/TinyWebServer/blob/master/interface/signinfail.jpg" height="200"/></div>
 
 
-测试
+web端测试
 ------------
 * 测试前确认已安装MySQL数据库
 
@@ -55,32 +56,22 @@ web端界面
     connection_pool *connPool=connection_pool::GetInstance("localhost","root","root","yourdb",3306,5);
     ```
 
-* 生成CGI
-
-    ```C++
-    cd CGI&mysql
-    make clean
-    make
-    ```
-
-* 将生成的check.cgi放到root文件夹
-
-    ```C++
-    cp ./check.cgi ../root
-    ```
-
 * 修改http_conn.cpp中的root路径
 
     ```C++
     const char* doc_root="/home/qgy/serverProject/serverProjectRegister/root";
     ```
 
-* 生成server
+* 生成server和check.cgi
 
     ```C++
-    cd ..
-    make clean
-    make
+    sh test.sh
+    ```
+    
+* 将生成的check.cgi放到root文件夹
+
+    ```C++
+    cp ./check.cgi ./root
     ```
 
 * 启动server

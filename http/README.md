@@ -16,12 +16,11 @@ process函数，服务器处理http请求行，调用process_read，然后写返
     
         * **parse_request_line**函数，解析http请求行，获得请求方法，目标文件url，http版本号，若能获得完整请求行，将状态转移为CHECK_STATE_HEADER
 	
-	* **parse_header**函数，解析http请求的一个头部信息，根据空行判断是否解析完毕，解析完毕返回GET_REQUEST
+		* **parse_header**函数，解析http请求的一个头部信息，根据空行判断是否解析完毕，解析完毕返回GET_REQUEST
 	
-	* **parse_content**函数，判断是否http请求是否被完整读入，完整读入返回GET_REQUEST
+		* **parse_content**函数，判断是否http请求是否被完整读入，完整读入返回GET_REQUEST
 	
-	* **do_request**函数，当得到一个完整，正确的http请求，分析目标文件的属性，判断是文件还是目录，用户是否拥有权限，成功则使用mmap将其映射到
-m_file_address处，更新m_file_address，返回FILE_REQUEST
+		* **do_request**函数，当得到一个完整，正确的http请求，分析目标文件的属性，判断是文件还是目录，用户是否拥有权限，成功则使用mmap将其映射到m_file_address处，更新m_file_address，返回FILE_REQUEST
 
 * **process_write**函数，根据状态码执行相应操作:BAD_REQUEST,NO_RESOURCE,FORBIDDEN_REQUEST,FILE_REQUEST,INTERNAL_ERROR，操作大致相同，调用add_status_line和add_headers
 

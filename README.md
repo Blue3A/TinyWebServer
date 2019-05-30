@@ -11,7 +11,7 @@ Linux下的简易web服务器，实现web端用户注册，登录功能,经压�
 > * [定时器处理非活动连接](https://github.com/qinguoyi/TinyWebServer/tree/master/timer)
 > * [同步/异步日志系统 ](https://github.com/qinguoyi/TinyWebServer/tree/master/log)  
 > * [数据库连接池](https://github.com/qinguoyi/TinyWebServer/tree/master/CGI%26mysql) 
-> * [CGI实现注册和登录校验](https://github.com/qinguoyi/TinyWebServer/tree/master/CGI%26mysql) 
+> * [CGI及同步线程注册和登录校验](https://github.com/qinguoyi/TinyWebServer/tree/master/CGI%26mysql) 
 > * [简易服务器压力测试](https://github.com/qinguoyi/TinyWebServer/tree/master/test_presure)
 
 
@@ -48,8 +48,14 @@ web端测试
     //添加数据
     INSERT INTO users(username, passwd) VALUES('name', 'passwd');
     ```
+* 修改main.c中的数据库初始化信息
 
-* 修改sign.cpp中的数据库初始化信息
+    ```C++
+    //root root为服务器数据库的登录名和密码
+    connection_pool *connPool=connection_pool::GetInstance("localhost","root","root","yourdb",3306,5);
+    ```
+
+* 修改http_conn.cpp中的数据库初始化信息
 
     ```C++
     //root root为服务器数据库的登录名和密码
@@ -61,18 +67,34 @@ web端测试
     ```C++
     const char* doc_root="/home/qgy/serverProject/serverProjectRegister/root";
     ```
+* 选择任一校验方式
 
-* 生成server和check.cgi
+- [ ] CGI多进程注册/登录校验
+	
+	* 修改sign.cpp中的数据库初始化信息
 
-    ```C++
-    sh test.sh
-    ```
-    
-* 将生成的check.cgi放到root文件夹
+	    ```C++
+	    //root root为服务器数据库的登录名和密码
+	    connection_pool *connPool=connection_pool::GetInstance("localhost","root","root","yourdb",3306,5);
+	    ```
+	* 生成check.cgi
 
-    ```C++
-    cp ./check.cgi ./root
-    ```
+	    ```C++
+	    make check.cgi
+	    ```
+	* 将生成的check.cgi放到root文件夹
+
+	    ```C++
+	    cp ./check.cgi ./root
+	    ```
+
+- [x] 同步线程注册/登录校验
+
+	* 生成server
+
+	    ```C++
+	    make server
+	    ```
 
 * 启动server
 

@@ -14,6 +14,7 @@
 #include "./timer/lst_timer.h"
 #include "./http/http_conn.h"
 #include "./log/log.h"
+#include "./CGI&mysql/sql_connection_pool.h"
 
 #define MAX_FD 65536		//最大文件描述符
 #define MAX_EVENT_NUMBER 10000	//最大事件数
@@ -91,7 +92,7 @@ int main(int argc,char *argv[])
 	
     //忽略SIGPIPE信号
     addsig(SIGPIPE,SIG_IGN);
-
+    
     //创建线程池
     threadpool<http_conn>* pool=NULL;
     try
@@ -101,11 +102,15 @@ int main(int argc,char *argv[])
     catch(...){
         return 1;
     }
-    
-    
+    //单例模式创建数据库连接池
+    connection_pool *connPool=connection_pool::GetInstance("localhost","root","root","qgydb",3306,5);    
+
     http_conn* users=new http_conn[MAX_FD];
     assert(users);
     int user_count=0;
+
+    //初始化数据库读取表
+    users->initmysql_result();
 
     //创建套接字，返回listenfd
     int listenfd=socket(PF_INET,SOCK_STREAM,0);
@@ -305,6 +310,8 @@ int main(int argc,char *argv[])
     delete [] users;
     delete [] users_timer;
     delete pool;
+    //销毁数据库连接池
+    connPool->DestroyPool()
     return 0;
 }
                 

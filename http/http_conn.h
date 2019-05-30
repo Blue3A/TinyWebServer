@@ -40,6 +40,7 @@ class http_conn{
 	sockaddr_in *get_address(){
 		return &m_address;	
 	}
+	void initmysql_result();
     private:
         void init();
         HTTP_CODE process_read();

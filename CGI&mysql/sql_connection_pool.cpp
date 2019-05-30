@@ -65,7 +65,7 @@ MYSQL* connection_pool::GetConnection()
 {
 	MYSQL * con = NULL;
 	pthread_mutex_lock(&lock);
-
+	reserve.wait();
 	if(connList.size() > 0)
 	{
 		con = connList.front();
@@ -92,6 +92,7 @@ bool connection_pool::ReleaseConnection(MYSQL * con)
 		--CurConn;
 
 		pthread_mutex_unlock(&lock);
+		reserve.post();
 		return true;
 	}
 	

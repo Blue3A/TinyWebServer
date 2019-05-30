@@ -1,5 +1,8 @@
-#include "http_conn.h"
+nclude "http_conn.h"
 #include "../log/log.h"
+#include <map>
+#include<mysql/mysql.h>
+
 //定义http响应的一些状态信息
 const char* ok_200_title="OK";
 const char* error_400_title="Bad Request";
@@ -14,6 +17,44 @@ const char* error_500_form="There was an unusual problem serving the request fil
 //当浏览器出现连接重置时，可能是网站根目录出错或http响应格式出错或者访问的文件中内容完全为空
 const char* doc_root="/home/qgy/serverProject/serverProjectRegister/root";
 
+//创建数据库连接池
+connection_pool *connPool=connection_pool::GetInstance("localhost","root","root","qgydb",3306,5);
+
+//将表中的用户名和密码放入map
+map<string,string> users;
+
+void http_conn::initmysql_result(){
+//先从连接池中取一个连接
+MYSQL *mysql=connPool->GetConnection();
+
+//在user表中检索username，passwd数据，浏览器端输入
+if(mysql_query(mysql,"SELECT username,passwd FROM user"))
+{
+	//printf("INSERT error:%s\n",mysql_error(mysql));
+	LOG_ERROR("SELECT error:%s\n",mysql_error(mysql));
+    	//return BAD_REQUEST;
+}
+
+//从表中检索完整的结果集
+MYSQL_RES *result=mysql_store_result(mysql);
+
+//返回结果集中的列数
+int num_fields=mysql_num_fields(result);
+
+//返回所有字段结构的数组
+MYSQL_FIELD *fields=mysql_fetch_fields(result);
+
+//从结果集中获取下一行，将对应的用户名和密码，存入map中
+while(MYSQL_ROW row=mysql_fetch_row(result))
+{
+	string temp1(row[0]);
+	string temp2(row[1]);
+	users[temp1]=temp2;
+}
+//将连接归还连接池
+connPool->ReleaseConnection(mysql);
+
+}
 //对文件描述符设置非阻塞
 int setnonblocking(int fd){
     int old_option=fcntl(fd,F_GETFL);
@@ -323,11 +364,7 @@ http_conn::HTTP_CODE http_conn::do_request()
 	strcat(m_url_real, m_url+2);
         strncpy(m_real_file+len,m_url_real,FILENAME_LEN-len-1);
 	free(m_url_real);
-	// /home/qgy/serverProject/serverProjectRegister/root/check.cgi
-	//LOG_INFO("+++++++++%s\n", m_real_file);
-    	//Log::get_instance()->flush();
-	//printf("+++++++++%s\n", m_real_file);
-
+	
 	//将用户名和密码提取出来
 	//user=123&passwd=123
         char name[100],password[100];
@@ -339,6 +376,52 @@ http_conn::HTTP_CODE http_conn::do_request()
         for(i=i+10;m_string[i]!='\0';++i,++j)
             password[j]=m_string[i];
         password[j]='\0';
+
+	//同步线程登录校验
+	pthread_mutex_t lock;
+        pthread_mutex_init(&lock, NULL);
+
+	//从连接池中取一个连接
+	MYSQL *mysql=connPool->GetConnection();
+	
+	//如果是注册，先检测数据库中是否有重名的
+	//没有重名的，进行增加数据
+	char *sql_insert = (char*)malloc(sizeof(char)*200);
+    	strcpy(sql_insert, "INSERT INTO user(username, passwd) VALUES(");
+	strcat(sql_insert, "'");
+	strcat(sql_insert, name);
+	strcat(sql_insert, "', '");
+	strcat(sql_insert, password);
+	strcat(sql_insert, "')");
+	 
+	if(*(p+1) == '3'){
+		if(users.find(name)==users.end()){
+
+		pthread_mutex_lock(&lock);
+		int res = mysql_query(mysql,sql_insert);
+		users.insert(pair<string, string>(name, password));
+		pthread_mutex_unlock(&lock);
+
+		if(!res)
+		    strcpy(m_url, "/log.html");
+		else
+		    strcpy(m_url, "/registerError.html");
+	}
+	else
+		strcpy(m_url, "/registerError.html");
+	}
+	//如果是登录，直接判断
+	//若浏览器端输入的用户名和密码在表中可以查找到，返回1，否则返回0
+	else if(*(p+1) == '2'){
+		if(users.find(name)!=users.end()&&users[name]==password)
+			strcpy(m_url, "/welcome.html");
+		else
+			strcpy(m_url, "/logError.html");
+	}
+	connPool->ReleaseConnection(mysql);
+
+//CGI多进程登录校验
+#if 0
 
 	//fd[0]:读管道，fd[1]:写管道
         pid_t pid;
@@ -407,34 +490,27 @@ http_conn::HTTP_CODE http_conn::do_request()
 	    //waitpid(pid,0,NULL);
 	    //printf("回收完成\n");
         }
+#endif
     }
-//#endif
+
 
     if(*(p+1) == '0'){
 	char *m_url_real = (char *)malloc(sizeof(char) * 200);
 	strcpy(m_url_real,"/register.html");
 	strncpy(m_real_file+len,m_url_real,strlen(m_url_real));
-	//strncpy(m_url_real, m_url, p - m_url + 1);
-	//strcat(m_url_real, "register.html");
-	//strncpy(m_real_file+len,m_url_real,FILENAME_LEN-len-1);
- 	//printf("+++++++++++++++++++++++++++++++++++++++++++%s\n", m_real_file);
+	
 	free(m_url_real);
     }
     else if( *(p+1) == '1'){
 	char *m_url_real = (char *)malloc(sizeof(char) * 200);
-	//strncpy(m_url_real, m_url, p - m_url + 1);
-	//strcat(m_url_real, "log.html");
 	strcpy(m_url_real,"/log.html");
 	strncpy(m_real_file+len,m_url_real,strlen(m_url_real));
-	//strncpy(m_real_file+len,m_url_real,FILENAME_LEN-len-1);
-	//printf("+++++++++++++++++++++++++++++++++++++++++++%s\n", m_real_file);
+	
 	free(m_url_real);
     }
     else
     	strncpy(m_real_file+len,m_url,FILENAME_LEN-len-1);
 
-    //printf("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
-    //printf("m_url:%s,  m_file:%s\n", m_url, m_real_file);
 
     if(stat(m_real_file,&m_file_stat)<0)
         return NO_RESOURCE;

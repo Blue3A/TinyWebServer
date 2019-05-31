@@ -377,7 +377,8 @@ http_conn::HTTP_CODE http_conn::do_request()
             password[j]=m_string[i];
         password[j]='\0';
 
-	//同步线程登录校验
+//同步线程登录校验
+//#if 0
 	pthread_mutex_t lock;
         pthread_mutex_init(&lock, NULL);
 
@@ -419,6 +420,7 @@ http_conn::HTTP_CODE http_conn::do_request()
 			strcpy(m_url, "/logError.html");
 	}
 	connPool->ReleaseConnection(mysql);
+//#endif
 
 //CGI多进程登录校验
 #if 0

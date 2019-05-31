@@ -15,6 +15,11 @@ Linux下的简易web服务器，实现web端用户注册，登录功能,经压�
 > * [简易服务器压力测试](https://github.com/qinguoyi/TinyWebServer/tree/master/test_presure)
 
 
+框架
+-------------
+<div align=center><img src="https://github.com/qinguoyi/TinyWebServer/tree/master/root/frame.jpg" height="800"/> </div>
+
+
 web端界面
 -------------
 

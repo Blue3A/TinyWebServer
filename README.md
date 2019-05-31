@@ -17,7 +17,7 @@ Linux下的简易web服务器，实现web端用户注册，登录功能,经压�
 
 框架
 -------------
-<div align=center><img src="https://github.com/qinguoyi/TinyWebServer/tree/master/root/frame.jpg" height="800"/> </div>
+<div align=center><img src="https://github.com/qinguoyi/TinyWebServer/blob/master/root/frame.jpg" height="765"/> </div>
 
 
 web端界面

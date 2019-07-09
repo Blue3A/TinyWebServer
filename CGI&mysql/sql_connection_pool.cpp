@@ -45,6 +45,10 @@ connection_pool::connection_pool(string url,string User,string PassWord,string D
 
 	this->MaxConn = MaxConn;
 	this->CurConn = 0;
+	//先将信号量设置为maxconn
+	for(int i = 0; i < MaxConn; ++i)
+		this->reserve.post();
+	
 	pthread_mutex_unlock(&lock);
 }
 

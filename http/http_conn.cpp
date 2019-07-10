@@ -683,18 +683,44 @@ bool http_conn::process_write(HTTP_CODE ret)
     m_iv_count=1;
     return true;
 }
-void http_conn::process()
+void http_conn::process(int flagrw, sort_timer_lst *timer_lst, util_timer *timer, client_data *user_timer)
 {
-    HTTP_CODE read_ret=process_read();
-    if(read_ret==NO_REQUEST)
-    {
-        modfd(m_epollfd,m_sockfd,EPOLLIN);
-        return;
+    
+    if(flagrw == 0){
+	if(!read_once()){
+	    close_conn();
+	    timer->cb_func( &user_timer[m_sockfd] );
+            if( timer )
+            {
+                timer_lst->del_timer( timer );
+            }
+	}
+	else{
+	    if( timer )
+            {
+                time_t cur = time( NULL );
+                timer->expire = cur + 3 * TIMESLOT;
+                //printf( "adjust timer once\n" );
+		LOG_INFO("%s","adjust timer once");
+            	Log::get_instance()->flush();
+                timer_lst->adjust_timer( timer );
+            }
+		    HTTP_CODE read_ret=process_read();
+		    if(read_ret==NO_REQUEST)
+		    {
+			modfd(m_epollfd,m_sockfd,EPOLLIN);
+			return;
+		    }
+		    bool write_ret=process_write(read_ret);
+		    if(!write_ret)
+		    {
+			close_conn();
+		    }
+		    modfd(m_epollfd,m_sockfd,EPOLLOUT);
+	    }
     }
-    bool write_ret=process_write(read_ret);
-    if(!write_ret)
-    {
-        close_conn();
-    }
-    modfd(m_epollfd,m_sockfd,EPOLLOUT);
+    else if (flagrw == 1){
+	if(!write())
+	    close_conn();
+	}
 }

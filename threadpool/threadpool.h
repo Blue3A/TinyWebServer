@@ -6,13 +6,14 @@
 #include<exception>
 #include<pthread.h>
 #include"../lock/locker.h"
+#include"../timer/lst_timer.h"
 template<typename T>
 class threadpool{
     public:
         /*thread_number是线程池中线程的数量，max_requests是请求队列中最多允许的、等待处理的请求的数量*/
         threadpool(int thread_number=8,int max_request=10000);
         ~threadpool();
-        bool append(T* request);
+        bool append(T* request, int flagrw, sort_timer_lst *timer_lst, util_timer* timer, client_data *m_user_timer);
     private:
         /*工作线程运行的函数，它不断从工作队列中取出任务并执行之*/
         static void *worker(void *arg);
@@ -25,9 +26,13 @@ class threadpool{
         locker m_queuelocker;//保护请求队列的互斥锁
         sem m_queuestat;//是否有任务需要处理
         bool m_stop;//是否结束线程
+	int m_rw;//读操作还是写操作,默认0为读操作
+	sort_timer_lst *m_timer_lst; //定时器链表
+	util_timer *m_timer; //socket对应定时器
+	client_data *m_user_timer;
 };
 template<typename T>
-threadpool<T>::threadpool(int thread_number,int max_requests):m_thread_number(thread_number),m_max_requests(max_requests),m_stop(false),m_threads(NULL){
+threadpool<T>::threadpool(int thread_number,int max_requests):m_thread_number(thread_number),m_max_requests(max_requests),m_stop(false),m_threads(NULL), m_rw(0),m_timer_lst(NULL), m_timer(NULL), m_user_timer(NULL){
     if(thread_number<=0||max_requests<=0)
         throw std::exception();
     m_threads=new pthread_t[m_thread_number];
@@ -52,7 +57,7 @@ threadpool<T>::~threadpool(){
     m_stop=true;
 }
 template<typename T>
-bool threadpool<T>::append(T* request)
+bool threadpool<T>::append(T* request, int flagrw, sort_timer_lst *timer_lst, util_timer* timer, client_data *user_timer)
 {
     m_queuelocker.lock();
     if(m_workqueue.size()>m_max_requests)
@@ -62,6 +67,13 @@ bool threadpool<T>::append(T* request)
     }
     m_workqueue.push_back(request);
     m_queuelocker.unlock();
+    if(flagrw == 0)
+	m_rw = 0;
+    if(flagrw == 1)
+	m_rw = 1;
+    m_timer_lst = timer_lst;
+    m_timer = timer;
+    m_user_timer = user_timer;
     m_queuestat.post();
     return true;
 }
@@ -88,7 +100,7 @@ void threadpool<T>::run()
         m_queuelocker.unlock();
         if(!request)
             continue;
-        request->process();
+        request->process(m_rw, m_timer_lst, m_timer, m_user_timer);
     }
 }
 #endif

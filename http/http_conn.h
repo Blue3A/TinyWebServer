@@ -19,6 +19,8 @@
 #include<errno.h>
 #include<sys/wait.h>
 #include"../lock/locker.h"
+#include"../timer/lst_timer.h"
+#include "../log/log.h"
 class http_conn{
     public:
         static const int FILENAME_LEN=200;
@@ -34,7 +36,7 @@ class http_conn{
     public:
         void init(int sockfd,const sockaddr_in &addr);
         void close_conn(bool real_close=true);
-        void process();
+        void process(int flagrw, sort_timer_lst *timer_lst, util_timer *timer, client_data *user_timer);
         bool read_once();
         bool write();
 	sockaddr_in *get_address(){

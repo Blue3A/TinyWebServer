@@ -21,6 +21,7 @@
 #include"../lock/locker.h"
 #include"../timer/lst_timer.h"
 #include "../log/log.h"
+#include "../CGI_mysql/sql_connection_pool.h"
 class http_conn{
     public:
         static const int FILENAME_LEN=200;

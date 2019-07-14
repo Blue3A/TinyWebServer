@@ -14,7 +14,7 @@
 #include "./timer/lst_timer.h"
 #include "./http/http_conn.h"
 #include "./log/log.h"
-#include "./CGI&mysql/sql_connection_pool.h"
+#include "./CGI_mysql/sql_connection_pool.h"
 
 #define MAX_FD 65536		//最大文件描述符
 #define MAX_EVENT_NUMBER 10000	//最大事件数
@@ -278,7 +278,7 @@ int main(int argc,char *argv[])
     delete [] users_timer;
     delete pool;
     //销毁数据库连接池
-    connPool->DestroyPool()
+    connPool->DestroyPool();
     return 0;
 }
                 

@@ -46,8 +46,8 @@ connection_pool::connection_pool(string url,string User,string PassWord,string D
 	this->MaxConn = MaxConn;
 	this->CurConn = 0;
 	//先将信号量设置为maxconn
-	for(int i = 0; i < MaxConn; ++i)
-		this->reserve.post();
+	//for(int i = 0; i < MaxConn; ++i)
+		//this->reserve.post();
 	
 	pthread_mutex_unlock(&lock);
 }
@@ -69,7 +69,7 @@ MYSQL* connection_pool::GetConnection()
 {
 	MYSQL * con = NULL;
 	pthread_mutex_lock(&lock);
-	reserve.wait();
+	//reserve.wait();
 	if(connList.size() > 0)
 	{
 		con = connList.front();
@@ -96,7 +96,7 @@ bool connection_pool::ReleaseConnection(MYSQL * con)
 		--CurConn;
 
 		pthread_mutex_unlock(&lock);
-		reserve.post();
+		//reserve.post();
 		return true;
 	}
 	

@@ -31,13 +31,14 @@ class http_conn{
         enum CHECK_STATE{CHECK_STATE_REQUESTLINE=0,CHECK_STATE_HEADER,CHECK_STATE_CONTENT};
         enum HTTP_CODE{NO_REQUEST,GET_REQUEST,BAD_REQUEST,NO_RESOURCE,FORBIDDEN_REQUEST,FILE_REQUEST,INTERNAL_ERROR,CLOSED_CONNECTION};
         enum LINE_STATUS{LINE_OK=0,LINE_BAD,LINE_OPEN};
+	int m_flag;//读写数据标志位
     public:
         http_conn(){}
         ~http_conn(){}
     public:
         void init(int sockfd,const sockaddr_in &addr);
         void close_conn(bool real_close=true);
-        void process(int flagrw, sort_timer_lst *timer_lst, util_timer *timer, client_data *user_timer);
+        void process(sort_timer_lst *timer_lst, util_timer *timer, client_data *user_timer);
         bool read_once();
         bool write();
 	sockaddr_in *get_address(){

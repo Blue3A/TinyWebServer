@@ -93,10 +93,10 @@ int main(int argc,char *argv[])
     addsig(SIGPIPE,SIG_IGN);
     
     //创建线程池
-    threadpool<http_conn>* pool=NULL;
+    threadpool* pool=NULL;
     try
     {
-        pool=new threadpool<http_conn>;
+        pool=new threadpool;
     }
     catch(...){
         return 1;

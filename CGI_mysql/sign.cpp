@@ -3,7 +3,7 @@
 #include<string>
 #include<string.h>
 #include<cstdio>
-#include"connection_pool.h"
+#include"sql_connection_pool.h"
 #include<map>
 using namespace std;
 
@@ -20,26 +20,6 @@ int main(int argc,char *argv[])
     
     //在连接池中取一个连接
     MYSQL *mysql=connPool->GetConnection();
-    //在user表中检索username，passwd数据，浏览器端输入
-    if(mysql_query(mysql,"SELECT username,passwd FROM user"))
-    {
-        printf("INSERT error:%s\n",mysql_error(mysql));
-        return -1;
-    }
-    //从表中检索完整的结果集
-    MYSQL_RES *result=mysql_store_result(mysql);
-    //返回结果集中的列数
-    int num_fields=mysql_num_fields(result);
-    //返回所有字段结构的数组
-    MYSQL_FIELD *fields=mysql_fetch_fields(result);
-
-    //从结果集中获取下一行，将对应的用户名和密码，存入map中
-    while(MYSQL_ROW row=mysql_fetch_row(result))
-    {
-        string temp1(row[0]);
-        string temp2(row[1]);
-        users[temp1]=temp2;
-    }
 
     string name(argv[1]);
     const char *namep = name.c_str();
@@ -55,13 +35,36 @@ int main(int argc,char *argv[])
     strcat(sql_insert, namep);
     strcat(sql_insert, "', '");
     strcat(sql_insert, passwdp);
-    strcat(sql_insert, "')");
- 
+    strcat(sql_insert, "');");
+
+    //登录时查询是否已经存在
+    char *sql_find = (char*)malloc(sizeof(char)*200);
+    strcpy(sql_find, "SELECT username FROM user WHERE username = ");
+    strcat(sql_find, "'");
+    strcat(sql_find, namep);
+    strcat(sql_find, "' and passwd = '");
+    strcat(sql_find, passwdp);
+    strcat(sql_find, "';");
+
+    //mysql_query只用于判断sql语句是否正确,正确返回0,否则返回1
+    //除了insert,delete,其他的select语句不能连续使用两次query语句,需要通过mysql_store_result返回结果集然后释放
+    //若判断数据库中是否存在,需要判断结果集中获取下一行是否为NULL
     if(flag == '3'){
-	if(users.find(name)==users.end()){
+	int res_;
+	mysql_query(mysql,sql_find);
+        MYSQL_RES *result=mysql_store_result(mysql);
+	if(NULL == mysql_fetch_row(result))
+		res_ = 0;
+	else
+		res_ = 1;
+
+	if(!res_){
+	    mysql_free_result(result);
 
 	    pthread_mutex_lock(&lock);
 	    int res = mysql_query(mysql,sql_insert);
+	    MYSQL_RES *result_=mysql_store_result(mysql);
+	    mysql_free_result(result_);
 	    pthread_mutex_unlock(&lock);
 
 	    if(!res)
@@ -69,22 +72,32 @@ int main(int argc,char *argv[])
 	    else
 		printf("0\n");
 	}
-	else
-	    printf("0\n");
+	else{
+	    	printf("0\n");
+	}
     }
     //如果是登录，直接判断
     //若浏览器端输入的用户名和密码在表中可以查找到，返回1，否则返回0
     else if(flag == '2'){
-	    if(users.find(name)!=users.end()&&users[name]==passwd)
-		printf("1\n");
+	    int res;
+	    mysql_query(mysql,sql_find);
+	    MYSQL_RES *result=mysql_store_result(mysql);
+	    if(NULL == mysql_fetch_row(result)){
+		res = 0;
+	    }
 	    else
+		res = 1;
+	    mysql_free_result(result);
+
+	    if(res){
+		printf("1\n");
+	    }
+	    else{
 		printf("0\n");
+	    }
     }
     else
 	printf("0\n");
-    //释放结果集使用的内存
-    mysql_free_result(result);
-
     connPool->DestroyPool();
 }
 

@@ -683,10 +683,10 @@ bool http_conn::process_write(HTTP_CODE ret)
     m_iv_count=1;
     return true;
 }
-void http_conn::process(int flagrw, sort_timer_lst *timer_lst, util_timer *timer, client_data *user_timer)
+void http_conn::process(sort_timer_lst *timer_lst, util_timer *timer, client_data *user_timer)
 {
     
-    if(flagrw == 0){
+    if(m_flag == 0){
 	if(!read_once()){
 	    close_conn();
 	    timer->cb_func( &user_timer[m_sockfd] );
@@ -719,7 +719,7 @@ void http_conn::process(int flagrw, sort_timer_lst *timer_lst, util_timer *timer
 		    modfd(m_epollfd,m_sockfd,EPOLLOUT);
 	    }
     }
-    else if (flagrw == 1){
+    else if (m_flag == 1){
 	if(!write())
 	    close_conn();
 	}

@@ -37,7 +37,7 @@ class connection_pool
 		MYSQL *Con;
 		connection_pool(string url,string User,string PassWord,string DataBaseName,int Port,unsigned int MaxConn);//构造方法
 		static connection_pool *connPool;//静态实例
-		sem reserve;
+		//sem reserve;
 	private:
 		string url;		//主机地址
 		string Port;		//数据库端口号
